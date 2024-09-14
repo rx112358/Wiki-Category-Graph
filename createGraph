@@ -1,0 +1,70 @@
+import wikipediaapi
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Initialize Wikipedia API
+wiki_wiki = wikipediaapi.Wikipedia('MyProjectName (merlin@example.com)', 'en')
+# Function to recursively get all categories and subcategories
+def get_all_subcategories(category, max_depth=1, current_depth=0, visited=None):
+    if visited is None:
+        visited = set()
+
+    if current_depth > max_depth:
+        return {}
+    
+    # Get category page
+    cat_page = wiki_wiki.page(f"Category:{category}")
+    
+    # Return if this category was already processed
+    if cat_page.title in visited:
+        return {}
+    
+    visited.add(cat_page.title)
+    
+    subcategories = {}
+    for member in cat_page.categorymembers.values():
+        if member.ns == 14:  # Namespace 14 refers to categories
+            subcategories[member.title] = get_all_subcategories(
+                member.title.replace("Category:", ""), max_depth, current_depth + 1, visited
+            )
+
+    return subcategories
+
+# Build a graph with all categories and subcategories
+def build_full_graph(max_depth=1):
+    G = nx.DiGraph()  # Directed graph
+    all_categories = "Main topic classifications"  # Root category to start from
+
+    # Recursively fetch all categories
+    subcategories = get_all_subcategories(all_categories, max_depth)
+
+    # Helper function to add nodes/edges to the graph
+    def add_to_graph(cat, subcats):
+        for subcat, nested_subcats in subcats.items():
+            G.add_edge(cat, subcat)
+            add_to_graph(subcat, nested_subcats)
+
+    add_to_graph(all_categories, subcategories)
+    return G
+
+# Visualize the graph using Matplotlib
+def draw_graph(G):
+    plt.figure(figsize=(12, 8))
+    pos = nx.spring_layout(G, k=0.8)
+    nx.draw(G, pos, with_labels=True, node_size=3000, node_color='skyblue', font_size=10, font_weight='bold', edge_color='gray')
+    plt.show()
+
+# Main logic
+if __name__ == "__main__":
+    # Control the depth of subcategory exploration
+    depth = 2  # Depth of subcategory exploration
+    
+    # Build the graph for all categories
+    G = build_full_graph(depth)
+
+     # Save the graph to a file
+    save_graph(G, "wiki_categories.graphml", format="graphml")  # Change format to 'gml' or 'edgelist' as needed
+
+
+    # Draw the graph
+    draw_graph(G)
