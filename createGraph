@@ -47,6 +47,17 @@ def build_full_graph(max_depth=1):
     add_to_graph(all_categories, subcategories)
     return G
 
+# Save the graph to a file
+def save_graph(G, file_name, format="graphml"):
+    if format == "graphml":
+        nx.write_graphml(G, file_name)  # Save as GraphML
+    elif format == "gml":
+        nx.write_gml(G, file_name)      # Save as GML
+    elif format == "edgelist":
+        nx.write_edgelist(G, file_name) # Save as Edge List
+    else:
+        raise ValueError("Unsupported format: choose 'graphml', 'gml', or 'edgelist'.")
+
 # Visualize the graph using Matplotlib
 def draw_graph(G):
     plt.figure(figsize=(12, 8))
